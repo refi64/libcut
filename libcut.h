@@ -27,9 +27,9 @@ struct __libcut_err_t {
 #define LIBCUT_TEST(name)\
 void __libcut_test_##name (struct __libcut_ctx_t*);\
 void name(struct __libcut_ctx_t* ctx) {\
-    ctx->__file = malloc(sizeof(__FILE__));\
+    ctx->__file = __libcut_malloc(sizeof(__FILE__));\
     memcpy(ctx->__file, __FILE__, sizeof(__FILE__));\
-    ctx->__name = malloc(sizeof(#name));\
+    ctx->__name = __libcut_malloc(sizeof(#name));\
     memcpy(ctx->__name, #name, sizeof(#name));\
     ctx->__nlen = sizeof(#name)-1;\
     *ctx->__msg = NULL;\
@@ -85,6 +85,7 @@ typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
                err->name, err->file, err->lineno, err->msg);\
         free(err->file);\
         free(err->msg);\
+        free(err->name);\
     }\
     printf("\033[34mTests run: %d\n", passed+failed);\
     printf("\033[32mTests succeeded: %d\n", passed);\
@@ -122,10 +123,9 @@ static void __libcut_asprintf(char** str, char* format, ...) {
     va_end(args);
 }
 
-#define LIBCUT_TEST_BASE(cond, msg, ...) do { if (!(cond)) {\
+#define LIBCUT_TEST_BASE(cond, onfail, msg, ...) do { if (!(cond)) {\
     __libcut_asprintf(ctx->__msg, msg, __VA_ARGS__, NULL);\
-    ctx->__lineno = __LINE__;\
-    return; } } while (0)
+    ctx->__lineno = __LINE__; onfail; return; } } while (0)
 
 #define LIBCUT_STRF(x) _Generic((x),\
     char*: "%s",\
@@ -155,7 +155,9 @@ static void __libcut_asprintf(char** str, char* format, ...) {
     __libcut_asprintf(&__libcut_abuf, LIBCUT_STRQF(a), (a), NULL);\
     char* __libcut_bbuf;\
     __libcut_asprintf(&__libcut_bbuf, LIBCUT_STRQF(b), (b), NULL);\
-    LIBCUT_TEST_BASE((expr), "%s " op " %s", __libcut_abuf, __libcut_bbuf);\
+    LIBCUT_TEST_BASE((expr), (free(__libcut_abuf), free(__libcut_bbuf)),\
+        "%s " op " %s", __libcut_abuf, __libcut_bbuf);\
+    free(__libcut_abuf); free(__libcut_bbuf);\
 } while (0)
 
 #define LIBCUT_TEST_EQ(a, b) LIBCUT_TEST_CMP(a, b, a == b, "!=")
