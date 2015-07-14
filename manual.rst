@@ -71,3 +71,23 @@ Use ``LIBCUT_TEST_CMP`` to create custom test cases:
    // example (this is how LIBCUT_TEST_EQ is defined):
    LIBCUT_TEST_CMP(1, 1, 1 == 1, "!=")
    // same as LIBCUT_TEST_EQ(1, 1)
+
+Memory tracking
+***************
+
+Libcut can track memory you allocate and free it when the current test is over. Simply use ``LIBCUT_TRACK``:
+
+.. code-block:: c
+   
+   void* m = malloc(5);
+   LIBCUT_TRACK(m);
+   // once the current test ends, *m* will be freed
+
+If you want to untrack a memory block that you already tracked, use ``LIBCUT_UNTRACK``:
+
+.. code-block:: c
+   
+   void* m = malloc(5);
+   LIBCUT_TRACK(m);
+   LIBCUT_UNTRACK(m);
+   // *m* will not be freed because it was untracked

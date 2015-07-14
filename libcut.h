@@ -15,6 +15,7 @@ struct __libcut_ctx_t {
     char** __msg;
     char* __file;
     size_t __lineno;
+    void** __trackptr;
     LIBCUT_CTX_FIELDS
 };
 
@@ -35,19 +36,29 @@ void name(struct __libcut_ctx_t* ctx) {\
     __libcut_test_##name (ctx); }\
 void __libcut_test_##name (struct __libcut_ctx_t* ctx)
 
+#define LIBCUT_TRACK(m) (*ctx->__trackptr++ = (m))
+#define LIBCUT_UNTRACK(m) do {\
+    void** __libcut_m = ctx->__trackptr;\
+    while (--__libcut_m!=ctx->__trackptr)\
+        if(*__libcut_m&&*__libcut_m==m){ *__libcut_m=NULL; break; }\
+} while (0)
+
 typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
 
 #define LIBCUT_MAIN(...) int main(int argc, char** argv) {\
     libcut_func_t tests[] = {__VA_ARGS__, NULL};\
     libcut_func_t* tptr = tests;\
     struct __libcut_err_t errl[sizeof(tests) / sizeof(tests[0])];\
-    memset(errl, 0, sizeof(tests) / sizeof(tests[0]));\
+    memset(errl, 0, sizeof(errl));\
     struct __libcut_err_t* errptr = errl;\
     int passed = 0, failed = 0;\
     char* msg;\
+    void* tracked[64];\
     struct __libcut_ctx_t ctx;\
     ctx.__msg = &msg;\
     for (libcut_func_t func = *tptr; func != NULL; func = *++tptr) {\
+        memset(tracked, 0, sizeof(tracked));\
+        ctx.__trackptr = &tracked[0];\
         func(&ctx);\
         if (msg) {\
             errptr->file = ctx.__file;\
@@ -65,6 +76,8 @@ typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
             free(ctx.__msg);\
             free(ctx.__name);\
         }\
+        if (ctx.__trackptr != &tracked[0])\
+            for (void** m=ctx.__trackptr-1; m != tracked-1; --m) if(*m)free(*m);\
     }\
     puts("");\
     for (struct __libcut_err_t* err = errl; err != errptr; ++err) {\
