@@ -102,8 +102,7 @@ static void* __libcut_malloc(size_t bytes) {
 }
 
 static void __libcut_asprintf(char** str, char* format, ...) {
-    va_list args;
-    va_list args2;
+    va_list args, args2;
     int len;
 
     va_copy(args2, args);
@@ -151,9 +150,8 @@ static void __libcut_asprintf(char** str, char* format, ...) {
     default: LIBCUT_STRF(x))
 
 #define LIBCUT_TEST_CMP(a, b, expr, op) do {\
-    char* __libcut_abuf;\
+    char* __libcut_abuf, *__libcut_bbuf;\
     __libcut_asprintf(&__libcut_abuf, LIBCUT_STRQF(a), (a), NULL);\
-    char* __libcut_bbuf;\
     __libcut_asprintf(&__libcut_bbuf, LIBCUT_STRQF(b), (b), NULL);\
     LIBCUT_TEST_BASE((expr), (free(__libcut_abuf), free(__libcut_bbuf)),\
         "%s " op " %s", __libcut_abuf, __libcut_bbuf);\
