@@ -73,7 +73,7 @@ typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
             ++passed;\
             printf("\033[32m.\033[0m");\
             free(ctx.__file);\
-            free(ctx.__msg);\
+            free(*ctx.__msg);\
             free(ctx.__name);\
         }\
         if (ctx.__trackptr != &tracked[0])\
