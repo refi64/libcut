@@ -158,16 +158,16 @@ static void __libcut_asprintf(char** str, char* format, ...) {
     free(__libcut_abuf); free(__libcut_bbuf);\
 } while (0)
 
-#define LIBCUT_TEST_EQ(a, b) LIBCUT_TEST_CMP(a, b, a == b, "!=")
-#define LIBCUT_TEST_NE(a, b) LIBCUT_TEST_CMP(a, b, a != b, "==")
-#define LIBCUT_TEST_LT(a, b) LIBCUT_TEST_CMP(a, b, a < b, ">=")
-#define LIBCUT_TEST_GT(a, b) LIBCUT_TEST_CMP(a, b, a > b, "<=")
-#define LIBCUT_TEST_LE(a, b) LIBCUT_TEST_CMP(a, b, a <= b, ">")
-#define LIBCUT_TEST_GE(a, b) LIBCUT_TEST_CMP(a, b, a >= b, "<")
+#define LIBCUT_TEST_EQ(a, b) LIBCUT_TEST_CMP(a, b, (a) == (b), "!=")
+#define LIBCUT_TEST_NE(a, b) LIBCUT_TEST_CMP(a, b, (a) != (b), "==")
+#define LIBCUT_TEST_LT(a, b) LIBCUT_TEST_CMP(a, b, (a) < (b), ">=")
+#define LIBCUT_TEST_GT(a, b) LIBCUT_TEST_CMP(a, b, (a) > (b), "<=")
+#define LIBCUT_TEST_LE(a, b) LIBCUT_TEST_CMP(a, b, (a) <= (b), ">")
+#define LIBCUT_TEST_GE(a, b) LIBCUT_TEST_CMP(a, b, (a) >= (b), "<")
 
-#define LIBCUT_TEST_STREQ(a, b) LIBCUT_TEST_CMP((const char*)a, (const char*)b,\
+#define LIBCUT_TEST_STREQ(a, b) LIBCUT_TEST_CMP((const char*)(a), (const char*)(b),\
                                                 strcmp(a, b) == 0, "!=")
-#define LIBCUT_TEST_STRNE(a, b) LIBCUT_TEST_CMP((const char*)a, (const char*)b,\
+#define LIBCUT_TEST_STRNE(a, b) LIBCUT_TEST_CMP((const char*)(a), (const char*)(b),\
                                                 strcmp(a, b) != 0, "==")
 
 #endif
