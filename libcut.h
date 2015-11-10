@@ -1,6 +1,7 @@
 #ifndef LIBCUT_H
 #define LIBCUT_H
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -142,7 +143,9 @@ static void __libcut_asprintf(char** str, char* format, ...) {
     float: "%f",\
     const float: "%f",\
     double: "%lg",\
-    const double: "%lg")
+    const double: "%lg",\
+    void*: "0x%"PRIXPTR,\
+    const void*: "0x%"PRIXPTR)
 
 #define LIBCUT_STRQF(x) _Generic((x),\
     char*: "'%s'",\
