@@ -17,4 +17,9 @@ LIBCUT_TEST(abc) {
     LIBCUT_TEST_EQ(1, 0);
 }
 
-LIBCUT_MAIN(abc, xyz)
+LIBCUT_TEST(ptr) {
+    char* p = "123";
+    LIBCUT_TEST_EQ((void*)p, NULL);
+}
+
+LIBCUT_MAIN(abc, xyz, ptr)
