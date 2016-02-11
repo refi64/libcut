@@ -11,7 +11,7 @@
 #define LIBCUT_CTX_FIELDS
 #endif
 
-struct __libcut_ctx_t {
+typedef struct __libcut_ctx_t {
     char* __name;
     size_t __nlen;
     char** __msg;
@@ -19,16 +19,16 @@ struct __libcut_ctx_t {
     size_t __lineno;
     void** __trackptr;
     LIBCUT_CTX_FIELDS
-};
+} __libcut_ctx_t;
 
-struct __libcut_err_t {
+typedef struct __libcut_err_t {
     char* msg, *file, *name;
     size_t lineno;
-};
+} __libcut_err_t;
 
 #define LIBCUT_TEST(name)\
-void __libcut_test_##name (struct __libcut_ctx_t*);\
-void name(struct __libcut_ctx_t* ctx) {\
+void __libcut_test_##name (__libcut_ctx_t*);\
+void name(__libcut_ctx_t* ctx) {\
     ctx->__file = __libcut_malloc(sizeof(__FILE__));\
     memcpy(ctx->__file, __FILE__, sizeof(__FILE__));\
     ctx->__name = __libcut_malloc(sizeof(#name));\
@@ -36,7 +36,7 @@ void name(struct __libcut_ctx_t* ctx) {\
     ctx->__nlen = sizeof(#name)-1;\
     *ctx->__msg = NULL;\
     __libcut_test_##name (ctx); }\
-void __libcut_test_##name (struct __libcut_ctx_t* ctx)
+void __libcut_test_##name (__libcut_ctx_t* ctx)
 
 #define LIBCUT_TRACK(m) (*ctx->__trackptr++ = (m))
 #define LIBCUT_UNTRACK(m) do {\
@@ -45,55 +45,61 @@ void __libcut_test_##name (struct __libcut_ctx_t* ctx)
         if(*__libcut_m&&*__libcut_m==m){ *__libcut_m=NULL; break; }\
 } while (0)
 
-typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
+typedef void (*libcut_func_t)(__libcut_ctx_t*);
+
+static int __libcut_main(libcut_func_t* tests, __libcut_err_t* errl,
+                         size_t ntests) {
+    libcut_func_t* tptr = tests;
+    __libcut_err_t* errptr = errl;
+    memset(errl, 0, ntests*sizeof(__libcut_err_t));
+    int passed = 0, failed = 0;
+    char* msg;
+    void* tracked[64];
+    __libcut_ctx_t ctx;
+    ctx.__msg = &msg;
+    for (libcut_func_t func = *tptr; func != NULL; func = *++tptr) {
+        memset(tracked, 0, sizeof(tracked));
+        ctx.__trackptr = &tracked[0];
+        func(&ctx);
+        if (msg) {
+            errptr->file = ctx.__file;
+            errptr->msg = msg;
+            errptr->lineno = ctx.__lineno;
+            errptr->name = ctx.__name;
+            ++errptr;
+            ++failed;
+            printf("\033[31mF\033[0m");
+        }
+        else {
+            ++passed;
+            printf("\033[32m.\033[0m");
+            free(ctx.__file);
+            free(*ctx.__msg);
+            free(ctx.__name);
+        }
+        fflush(stdout);
+        if (ctx.__trackptr != &tracked[0])
+            for (void** m=ctx.__trackptr-1; m != tracked-1; --m) if(*m)free(*m);
+    }
+    puts("");
+    for (__libcut_err_t* err = errl; err != errptr; ++err) {
+        printf("\033[31merror in test %s at %s:%zu:\033[0m\033[1m %s\033[0m\n",
+               err->name, err->file, err->lineno, err->msg);
+        free(err->file);
+        free(err->msg);
+        free(err->name);
+    }
+    printf("\033[34mTests run: %d\n", passed+failed);
+    printf("\033[32mTests succeeded: %d\n", passed);
+    printf("\033[31mTests failed: %d\033[0m\n", failed);
+    return failed ? 1 : 0;
+}
 
 #define LIBCUT_MAIN(...) int main(int argc, char** argv) {\
     libcut_func_t tests[] = {__VA_ARGS__, NULL};\
-    libcut_func_t* tptr = tests;\
     struct __libcut_err_t errl[sizeof(tests) / sizeof(tests[0])];\
-    memset(errl, 0, sizeof(errl));\
-    struct __libcut_err_t* errptr = errl;\
-    int passed = 0, failed = 0;\
-    char* msg;\
-    void* tracked[64];\
-    struct __libcut_ctx_t ctx;\
-    ctx.__msg = &msg;\
-    for (libcut_func_t func = *tptr; func != NULL; func = *++tptr) {\
-        memset(tracked, 0, sizeof(tracked));\
-        ctx.__trackptr = &tracked[0];\
-        func(&ctx);\
-        if (msg) {\
-            errptr->file = ctx.__file;\
-            errptr->msg = msg;\
-            errptr->lineno = ctx.__lineno;\
-            errptr->name = ctx.__name;\
-            ++errptr;\
-            ++failed;\
-            printf("\033[31mF\033[0m");\
-        }\
-        else {\
-            ++passed;\
-            printf("\033[32m.\033[0m");\
-            free(ctx.__file);\
-            free(*ctx.__msg);\
-            free(ctx.__name);\
-        }\
-        fflush(stdout);\
-        if (ctx.__trackptr != &tracked[0])\
-            for (void** m=ctx.__trackptr-1; m != tracked-1; --m) if(*m)free(*m);\
-    }\
-    puts("");\
-    for (struct __libcut_err_t* err = errl; err != errptr; ++err) {\
-        printf("\033[31merror in test %s at %s:%zu:\033[0m\033[1m %s\033[0m\n", \
-               err->name, err->file, err->lineno, err->msg);\
-        free(err->file);\
-        free(err->msg);\
-        free(err->name);\
-    }\
-    printf("\033[34mTests run: %d\n", passed+failed);\
-    printf("\033[32mTests succeeded: %d\n", passed);\
-    printf("\033[31mTests failed: %d\033[0m\n", failed);\
-    return failed ? 1 : 0; }
+    return __libcut_main(tests, errl, sizeof(tests) / sizeof(tests[0]));\
+}
 
 static void* __libcut_malloc(size_t bytes) {
     void* ptr = malloc(bytes);
