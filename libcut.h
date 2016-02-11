@@ -78,6 +78,7 @@ typedef void (*libcut_func_t)(struct __libcut_ctx_t*);
             free(*ctx.__msg);\
             free(ctx.__name);\
         }\
+        fflush(stdout);\
         if (ctx.__trackptr != &tracked[0])\
             for (void** m=ctx.__trackptr-1; m != tracked-1; --m) if(*m)free(*m);\
     }\
