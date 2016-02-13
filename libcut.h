@@ -7,6 +7,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef __GNUC__
+#define LIBCUT_UNUSED __attribute__((__unused__))
+#else
+#define LIBCUT_UNUSED
+#endif
+
 #ifndef LIBCUT_CTX_FIELDS
 #define LIBCUT_CTX_FIELDS
 #endif
@@ -47,7 +53,7 @@ void __libcut_test_##name (__libcut_ctx_t* ctx)
 
 typedef void (*libcut_func_t)(__libcut_ctx_t*);
 
-static int __libcut_main(libcut_func_t* tests, __libcut_err_t* errl,
+LIBCUT_UNUSED static int __libcut_main(libcut_func_t* tests, __libcut_err_t* errl,
                          size_t ntests) {
     libcut_func_t* tptr = tests, func;
     __libcut_err_t* errptr = errl, *err;
@@ -101,7 +107,7 @@ static int __libcut_main(libcut_func_t* tests, __libcut_err_t* errl,
     return __libcut_main(tests, errl, sizeof(tests) / sizeof(tests[0]));\
 }
 
-static void* __libcut_malloc(size_t bytes) {
+LIBCUT_UNUSED static void* __libcut_malloc(size_t bytes) {
     void* ptr = malloc(bytes);
     if (!ptr) {
         fputs("__libcut_malloc: fatal error (out of memory)\n", stderr);
@@ -110,7 +116,7 @@ static void* __libcut_malloc(size_t bytes) {
     return ptr;
 }
 
-static void __libcut_asprintf(char** str, char* format, ...) {
+LIBCUT_UNUSED static void __libcut_asprintf(char** str, char* format, ...) {
     va_list args, args2;
     int len;
 
